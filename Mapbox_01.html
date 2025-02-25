@@ -2,16 +2,56 @@
 <html>
 <head>
   <title>London Attraction Map</title>
-  <!-- 引入 Mapbox GL JS -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
   <style>
+    #title {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #FFD700; /* 金黄色 */
+      font-size: 2.0em;
+      font-family: 'Arial Black', sans-serif;
+      text-shadow: 0 0 5px rgba(255,215,0,0.7); /* 发光效果 */
+      z-index: 1000;
+      padding: 10px 20px;
+      border-radius: 15px;
+    }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    #menu { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; z-index: 1000; }
+    #menu {
+      position: absolute;
+      top: 100px; /* 下移避开标题 */
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px;
+      border-radius: 8px;
+      color: white;
+      z-index: 1000;
+    }
+    
+    #type-filter {
+      background: #333;
+      color: #FFD700;
+      border: 1px solid #FFD700;
+      padding: 8px;
+      border-radius: 5px;
+    }
+    
+    /* 弹窗透明背景 */
+    .custom-popup .mapboxgl-popup-content {
+      background: rgba(255, 255, 255, 0.95) !important;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      pointer-events: auto !important; /* 允许点击弹窗内容 */
+    }
   </style>
 </head>
+
 <body>
-  <!-- 分类筛选菜单 -->
+  <div id="title">London Attractions Map</div>  
+
   <div id="menu">
     <select id="type-filter">
       <option value="all">all</option>
@@ -23,30 +63,35 @@
       <option value="zoo">zoo</option>
       <option value="artwork">artwork</option>
       <option value="aquarium">aquarium</option>
-      <!-- 根据实际数据中的 type 值添加更多选项 -->
     </select>
   </div>
   <div id="map"></div>
 
   <script>
-    // 替换为你的 Mapbox Token
     mapboxgl.accessToken = 'pk.eyJ1IjoieWwzIiwiYSI6ImNtN2txZGc2czAzYjMybXNka3ZsbTl5cmQifQ.kV4cU6Id_aGZM7R1HiudwA';
     const map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [-0.1278, 51.5074], // 伦敦市中心坐标
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [-0.1278, 51.5074],
       zoom: 12
     });
 
-    // 加载 GeoJSON 数据并初始化图层
+    // 初始化弹窗
+    const popup = new mapboxgl.Popup({
+      closeButton: true,
+      className: 'custom-popup',
+      offset: [0, -20]
+    });
+
+    let currentPopup = null;
+    let closeTimer;
+
     map.on('load', () => {
-      // 添加数据源
       map.addSource('attractions', {
         type: 'geojson',
-        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/refs/heads/main/filtered_london_attractions.geojson?token=GHSAT0AAAAAAC7R45RO4A4G5VKXCADYQISEZ557W2A' // 本地或远程URL
+        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/filtered_london_attractions.geojson'
       });
 
-      // 初始图层（全部类型）
       map.addLayer({
         id: 'attractions-layer',
         type: 'circle',
@@ -58,31 +103,71 @@
         }
       });
 
-      // 绑定筛选事件
+      map.addSource('london-boundary', {
+        type: 'geojson',
+        data: 'london_boundary.geojson' // 替换为你的文件路径或URL
+});
+
+      map.addLayer({
+        id: 'london-boundary-layer',
+        type: 'fill',
+        source: 'london-boundary',
+        paint: {
+        'fill-color': 'rgba(200, 200, 200, 0.2)',
+        'fill-outline-color': '#FFFFFF'
+        }
+}); 
+        
+        
+        
+      // 筛选功能
       document.getElementById('type-filter').addEventListener('change', (e) => {
         const selectedType = e.target.value;
-        // 设置筛选条件
-        if (selectedType === 'all') {
-          map.setFilter('attractions-layer', null); // 显示全部
-        } else {
-          map.setFilter('attractions-layer', ['==', ['get', 'type'], selectedType]);
+        map.setFilter('attractions-layer', selectedType === 'all' ? null : ['==', ['get', 'type'], selectedType]);
+      });
+
+      // 悬停显示弹窗
+      map.on('mouseenter', 'attractions-layer', (e) => {
+        if (currentPopup) return;
+
+        const props = e.features[0].properties;
+        let html = `<h3 style="margin:0">${props.name}</h3>`;
+        if (props.type) html += `<p style="color:#666">Type: ${props.type}</p>`;
+        if (props.image) html += `<img src="${props.image}" style="max-width:200px; margin:10px 0">`;
+        if (props.address) html += `<p>📍 ${props.address}</p>`;
+        if (props.website) html += `<p>🌐 <a href="${props.website}" target="_blank" style="color:#1a73e8">Website</a></p>`;
+        if (props.wikipedia) {
+          const [lang, page] = props.wikipedia.split(':');
+          html += `<p>📚 <a href="https://${lang}.wikipedia.org/wiki/${page.replace(/ /g, '_')}" target="_blank" style="color:#1a73e8">Wikipedia</a></p>`;
+        }
+
+        currentPopup = popup.setLngLat(e.lngLat).setHTML(html);
+        currentPopup.addTo(map);
+      });
+
+      // 延迟关闭弹窗
+      map.on('mouseleave', 'attractions-layer', () => {
+        closeTimer = setTimeout(() => {
+          currentPopup?.remove();
+          currentPopup = null;
+        }, 300);
+      });
+
+      // 取消关闭（当鼠标进入弹窗）
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.closest('.mapboxgl-popup-content')) {
+          clearTimeout(closeTimer);
         }
       });
-    });
 
-    // 点击标记显示详细信息（可选）
-    map.on('click', 'attractions-layer', (e) => {
-      const props = e.features[0].properties;
-      new mapboxgl.Popup()
-        .setHTML(`
-          <h3>${props.name}</h3>
-          <p>类型：${props.type}</p>
-          ${props.image ? `<img src="${props.image}" width="200">` : ''}
-          <p>地址：${props.address}</p>
-        `)
-        .setLngLat(e.lngLat)
-        .addTo(map);
-    });
+      // 点击地图空白处关闭
+      map.on('click', (e) => {
+        if (!e.features?.length) {
+          currentPopup?.remove();
+          currentPopup = null;
+        }
+      });
+    }); // <-- 闭合 map.on('load')
   </script>
 </body>
 </html>
