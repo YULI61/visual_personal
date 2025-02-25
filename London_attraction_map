@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>London Attraction Map</title>
+  <!-- 引入 Mapbox GL JS -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
+  <style>
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #menu { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; z-index: 1000; }
+  </style>
+</head>
+<body>
+  <!-- 分类筛选菜单 -->
+  <div id="menu">
+    <select id="type-filter">
+      <option value="all">all</option>
+      <option value="museum">museum</option>
+      <option value="gallery">gallery</option>
+      <option value="attraction">attraction</option>
+      <option value="theme_park">theme_park</option>
+      <option value="viewpoint">viewpoint</option>
+      <option value="zoo">zoo</option>
+      <option value="artwork">artwork</option>
+      <option value="aquarium">aquarium</option>
+      <!-- 根据实际数据中的 type 值添加更多选项 -->
+    </select>
+  </div>
+  <div id="map"></div>
+
+  <script>
+    // 替换为你的 Mapbox Token
+    mapboxgl.accessToken = 'pk.eyJ1IjoieWwzIiwiYSI6ImNtN2txZGc2czAzYjMybXNka3ZsbTl5cmQifQ.kV4cU6Id_aGZM7R1HiudwA';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [-0.1278, 51.5074], // 伦敦市中心坐标
+      zoom: 12
+    });
+
+    // 加载 GeoJSON 数据并初始化图层
+    map.on('load', () => {
+      // 添加数据源
+      map.addSource('attractions', {
+        type: 'geojson',
+        data: 'london_attractions_corrected.geojson' // 本地或远程URL
+      });
+
+      // 初始图层（全部类型）
+      map.addLayer({
+        id: 'attractions-layer',
+        type: 'circle',
+        source: 'attractions',
+        paint: {
+          'circle-radius': 8,
+          'circle-color': '#ff0000',
+          'circle-opacity': 0.8
+        }
+      });
+
+      // 绑定筛选事件
+      document.getElementById('type-filter').addEventListener('change', (e) => {
+        const selectedType = e.target.value;
+        // 设置筛选条件
+        if (selectedType === 'all') {
+          map.setFilter('attractions-layer', null); // 显示全部
+        } else {
+          map.setFilter('attractions-layer', ['==', ['get', 'type'], selectedType]);
+        }
+      });
+    });
+
+    // 点击标记显示详细信息（可选）
+    map.on('click', 'attractions-layer', (e) => {
+      const props = e.features[0].properties;
+      new mapboxgl.Popup()
+        .setHTML(`
+          <h3>${props.name}</h3>
+          <p>类型：${props.type}</p>
+          ${props.image ? `<img src="${props.image}" width="200">` : ''}
+          <p>地址：${props.address}</p>
+        `)
+        .setLngLat(e.lngLat)
+        .addTo(map);
+    });
+  </script>
+</body>
+</html>
