@@ -4,47 +4,87 @@
   <title>London Attraction Map</title>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
-  <style>
+  
+    
+<style>
     #title {
       position: absolute;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      color: #FFD700; /* 金黄色 */
-      font-size: 2.0em;
+      color: #FFD700;
+      font-size: 2em;
       font-family: 'Arial Black', sans-serif;
-      text-shadow: 0 0 5px rgba(255,215,0,0.7); /* 发光效果 */
+      text-shadow: 0 0 5px rgba(255,215,0,0.2);
       z-index: 1000;
       padding: 10px 20px;
       border-radius: 15px;
+      background: rgba(0,0,0,0);
     }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    #menu {
-      position: absolute;
-      top: 100px; /* 下移避开标题 */
-      left: 10px;
-      background: rgba(0,0,0,0.7);
-      padding: 15px;
-      border-radius: 8px;
-      color: white;
+
+    /* 侧边筛选面板 */
+    .filter-panel {
+      position: fixed;
+      left: -200px;
+      top: 180px;
+      width: 180px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 0 8px 8px 0;
+      transition: all 0.3s ease;
+      box-shadow: 3px 0 15px rgba(0,0,0,0.3);
       z-index: 1000;
+      padding: 10px;
     }
-    
-    #type-filter {
-      background: #333;
+
+    .filter-panel.expanded {
+      left: 0;
+    }
+
+    /* 切换按钮 */
+    .toggle-button {
+      position: absolute;
+      right: -30px;
+      top: 0;
+      width: 30px;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: #FFD700;
-      border: 1px solid #FFD700;
-      padding: 8px;
-      border-radius: 5px;
+      font-size: 1.5em;
+      border: none;
     }
-    
-    /* 弹窗透明背景 */
-    .custom-popup .mapboxgl-popup-content {
-      background: rgba(255, 255, 255, 0.95) !important;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      pointer-events: auto !important; /* 允许点击弹窗内容 */
+
+    /* 筛选选项 */
+    .filter-option {
+      padding: 10px;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+      margin: 5px 0;
+    }
+
+    .filter-option:hover {
+      background: rgba(255,215,0,0.1);
+    }
+
+    .filter-option.active {
+      background: rgba(255,215,0,0.2);
+      box-shadow: 0 0 8px rgba(255,215,0,0.3);
+    }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -52,23 +92,34 @@
 <body>
   <div id="title">London Attractions Map</div>  
 
-  <div id="menu">
-    <select id="type-filter">
-      <option value="all">all</option>
-      <option value="museum">museum</option>
-      <option value="gallery">gallery</option>
-      <option value="attraction">attraction</option>
-      <option value="theme_park">theme_park</option>
-      <option value="viewpoint">viewpoint</option>
-      <option value="zoo">zoo</option>
-      <option value="artwork">artwork</option>
-      <option value="aquarium">aquarium</option>
-    </select>
+  <!-- 折叠筛选面板 -->
+  <div class="filter-panel">
+    <button class="toggle-button">»</button>
+    <div class="filter-content">
+      <div class="filter-option active" data-type="all">
+        <div class="color-dot" style="background: #FFFFFF"></div>
+        All Types
+      </div>
+    </div>
   </div>
+
   <div id="map"></div>
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoieWwzIiwiYSI6ImNtN2txZGc2czAzYjMybXNka3ZsbTl5cmQifQ.kV4cU6Id_aGZM7R1HiudwA';
+    
+    // 分类颜色配置
+    const categoryColors = {
+      museum: '#FF6B6B',
+      gallery: '#4ECDC4',
+      attraction: '#FFD700',
+      theme_park: '#FF9F43',
+      viewpoint: '#2ECC71',
+      zoo: '#A569BD',
+      artwork: '#3498DB',
+      aquarium: '#1ABC9C'
+    };
+
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
@@ -79,51 +130,107 @@
     // 初始化弹窗
     const popup = new mapboxgl.Popup({
       closeButton: true,
-      className: 'custom-popup',
-      offset: [0, -20]
+      offset: [0, -20],
+      className: 'custom-popup'
     });
 
     let currentPopup = null;
     let closeTimer;
 
+    // 侧边栏控制逻辑
+    const filterPanel = document.querySelector('.filter-panel');
+    const toggleButton = document.querySelector('.toggle-button');
+
+    toggleButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      filterPanel.classList.toggle('expanded');
+      toggleButton.innerHTML = filterPanel.classList.contains('expanded') ? '«' : '»';
+    });
+
+    // 点击外部关闭侧边栏
+    document.addEventListener('click', (e) => {
+      if (!filterPanel.contains(e.target) && !toggleButton.contains(e.target)) {
+        filterPanel.classList.remove('expanded');
+        toggleButton.innerHTML = '»';
+      }
+    });
+
     map.on('load', () => {
+      
+      // 添加伦敦边界数据
+      map.addSource('london-boundary', {
+        type: 'geojson',
+        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/London_boundary.geojson'
+      });
+
+      // 添加边界图层（线图层）
+      map.addLayer({
+        id: 'london-boundary-layer',
+        type: 'line',
+        source: 'london-boundary',
+        paint: {
+          'line-color': '#FFFFFF',
+          'line-width': 1.5,
+          'line-opacity': 0.4
+        }
+      });
+        
+      // 添加景点数据
       map.addSource('attractions', {
         type: 'geojson',
         data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/filtered_london_attractions.geojson'
       });
 
+      // 添加分类颜色图层
       map.addLayer({
         id: 'attractions-layer',
         type: 'circle',
         source: 'attractions',
         paint: {
           'circle-radius': 8,
-          'circle-color': '#ff0000',
-          'circle-opacity': 0.8
+          'circle-color': [
+            'match', 
+            ['get', 'type'],
+            'museum', categoryColors.museum,
+            'gallery', categoryColors.gallery,
+            'attraction', categoryColors.attraction,
+            'theme_park', categoryColors.theme_park,
+            'viewpoint', categoryColors.viewpoint,
+            'zoo', categoryColors.zoo,
+            'artwork', categoryColors.artwork,
+            'aquarium', categoryColors.aquarium,
+            '#CCCCCC' // 默认颜色
+          ],
+          'circle-opacity': 0.8,
+          'circle-stroke-width': 0,
+          'circle-stroke-color': '#FFFFFF'
         }
       });
 
-      map.addSource('london-boundary', {
-        type: 'geojson',
-        data: 'london_boundary.geojson' // 替换为你的文件路径或URL
-});
+      // 动态生成筛选选项
+      const filterContent = document.querySelector('.filter-content');
+      Object.entries(categoryColors).forEach(([type, color]) => {
+        const option = document.createElement('div');
+        option.className = 'filter-option';
+        option.dataset.type = type;
+        option.innerHTML = `
+          <div class="color-dot" style="background: ${color}"></div>
+          ${type.charAt(0).toUpperCase() + type.slice(1)}
+        `;
+        filterContent.appendChild(option);
+      });
 
-      map.addLayer({
-        id: 'london-boundary-layer',
-        type: 'fill',
-        source: 'london-boundary',
-        paint: {
-        'fill-color': 'rgba(200, 200, 200, 0.2)',
-        'fill-outline-color': '#FFFFFF'
-        }
-}); 
-        
-        
-        
       // 筛选功能
-      document.getElementById('type-filter').addEventListener('change', (e) => {
-        const selectedType = e.target.value;
-        map.setFilter('attractions-layer', selectedType === 'all' ? null : ['==', ['get', 'type'], selectedType]);
+      document.querySelectorAll('.filter-option').forEach(option => {
+        option.addEventListener('click', function() {
+          document.querySelectorAll('.filter-option').forEach(opt => opt.classList.remove('active'));
+          this.classList.add('active');
+          
+          const selectedType = this.dataset.type;
+          map.setFilter('attractions-layer', 
+            selectedType === 'all' ? null : ['==', ['get', 'type'], selectedType]
+          );
+        });
       });
 
       // 悬停显示弹窗
@@ -131,7 +238,7 @@
         if (currentPopup) return;
 
         const props = e.features[0].properties;
-        let html = `<h3 style="margin:0">${props.name}</h3>`;
+        let html = `<h3 style="margin:0; color:${categoryColors[props.type] || '#FFF'}">${props.name}</h3>`;
         if (props.type) html += `<p style="color:#666">Type: ${props.type}</p>`;
         if (props.image) html += `<img src="${props.image}" style="max-width:200px; margin:10px 0">`;
         if (props.address) html += `<p>📍 ${props.address}</p>`;
@@ -145,7 +252,7 @@
         currentPopup.addTo(map);
       });
 
-      // 延迟关闭弹窗
+      // 弹窗控制逻辑
       map.on('mouseleave', 'attractions-layer', () => {
         closeTimer = setTimeout(() => {
           currentPopup?.remove();
@@ -153,21 +260,25 @@
         }, 300);
       });
 
-      // 取消关闭（当鼠标进入弹窗）
       document.addEventListener('mouseover', (e) => {
         if (e.target.closest('.mapboxgl-popup-content')) {
           clearTimeout(closeTimer);
         }
       });
 
-      // 点击地图空白处关闭
-      map.on('click', (e) => {
-        if (!e.features?.length) {
-          currentPopup?.remove();
-          currentPopup = null;
-        }
-      });
-    }); // <-- 闭合 map.on('load')
+          
+      // 道路样式修改
+      setTimeout(() => {
+          const roadLayers = map.getStyle().layers.filter(layer => layer.id && layer.id.includes('road'));
+
+          roadLayers.forEach(layer => {
+              map.setPaintProperty(layer.id, 'line-color', '#FFD700');
+              map.setPaintProperty(layer.id, 'line-width', layer.id.includes('primary') || layer.id.includes('secondary') || layer.id.includes('tertiary') ? 2.5 : 1);
+              map.setPaintProperty(layer.id, 'line-opacity', layer.id.includes('primary') || layer.id.includes('secondary') || layer.id.includes('tertiary') ? 0.8 : 0.2);
+          });
+      }, 1000);
+
+    });
   </script>
 </body>
 </html>
