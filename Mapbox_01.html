@@ -119,12 +119,10 @@
     const categoryColors = {
       museum: '#FF6B6B',
       gallery: '#3498DB',
-      theme_park: '#FF9F43',
       attraction: '#FFD700',
-      zoo: '#8E44AD',
+      'zoo+aquarium': '#FF9F43',
       park: '#2ECC71',
-      historic: '#8B4513',
-      aquarium: '#1ABC9C'
+      historic: '#8B4513'
     };
 
     const map = new mapboxgl.Map({
@@ -203,12 +201,10 @@
             ['get', 'type'],
             'museum', categoryColors.museum,
             'gallery', categoryColors.gallery,
-            'theme_park', categoryColors.theme_park,
-            'zoo', categoryColors.zoo,
+            'zoo+aquarium', categoryColors.'zoo+aquarium',
             'park', categoryColors.park,
             'historic', categoryColors.historic,
             'aquarium', categoryColors.aquarium,
-            'attraction', categoryColors.attraction,
             '#CCCCCC' // 默认颜色
           ],
           'circle-opacity': 0.8,

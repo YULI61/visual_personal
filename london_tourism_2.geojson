@@ -243,7 +243,7 @@
       },
       "properties": {
         "name": "London Aquarium",
-        "type": "zoo+aquarium",
+        "type": "zoo",
         "wikidata": "Q3312744",
         "wikipedia": "en:Sea Life London Aquarium",
         "address": "Westminster Bridge Road, London SE1 7PB",
@@ -15237,7 +15237,7 @@
       },
       "properties": {
         "name": "London Zoo",
-        "type": "zoo+aquarium",
+        "type": "zoo",
         "wikidata": "Q270263",
         "wikipedia": "en:London Zoo",
         "address": "Regent's Park, London NW1 4RY",
