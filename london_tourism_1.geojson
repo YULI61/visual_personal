@@ -453,7 +453,7 @@
       },
       "properties": {
         "name": "London Aquarium",
-        "type": "aquarium",
+        "type": "other",
         "wikidata": "Q3312744",
         "wikipedia": "en:Sea Life London Aquarium",
         "address": "Westminster Bridge Road, London SE1 7PB",
@@ -10344,7 +10344,7 @@
       },
       "properties": {
         "name": "Chessington World of Adventures",
-        "type": "theme_park",
+        "type": "other",
         "wikidata": "Q1070642",
         "wikipedia": null,
         "address": "Leatherhead Road, Chessington KT9 2NE",
@@ -22083,7 +22083,7 @@
       },
       "properties": {
         "name": "London Zoo",
-        "type": "zoo",
+        "type": "other",
         "wikidata": "Q270263",
         "wikipedia": "en:London Zoo",
         "address": "Regent's Park, London NW1 4RY",
