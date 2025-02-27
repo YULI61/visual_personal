@@ -15588,27 +15588,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -0.5307681,
-          52.6984226
-        ]
-      },
-      "properties": {
-        "name": "Ermine Street",
-        "type": "historic",
-        "wikidata": "Q1355961",
-        "wikipedia": "en:Ermine Street",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Roman Navenby - geograph.org.uk - 1385935.jpg"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           -0.1713231,
           51.4517195
         ]
