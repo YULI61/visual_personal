@@ -16008,27 +16008,6 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -0.7899385,
-          52.1561266
-        ]
-      },
-      "properties": {
-        "name": "Watling Street",
-        "type": "historic",
-        "wikidata": "Q1434239",
-        "wikipedia": "en:Watling Street",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": "https://commons.wikimedia.org/wiki/Special:FilePath/The old A5 (Watling Street) - geograph.org.uk - 373527.jpg"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           0.2463387,
           51.585505
         ]
@@ -16038,111 +16017,6 @@
         "type": "park",
         "wikidata": "Q15265044",
         "wikipedia": "en:Pages Wood",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": null
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -0.4304123,
-          51.1714499
-        ]
-      },
-      "properties": {
-        "name": "Stane Street",
-        "type": "historic",
-        "wikidata": "Q205511",
-        "wikipedia": "en:Stane Street (Chichester)",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Stane Street at Eartham Woods.JPG"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -0.6033964,
-          51.4369607
-        ]
-      },
-      "properties": {
-        "name": "Devil's Highway",
-        "type": "historic",
-        "wikidata": "Q19461336",
-        "wikipedia": "en:Devil's Highway (Roman Britain)",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": "https://commons.wikimedia.org/wiki/Special:FilePath/London to Bath.JPG"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          0.4966052,
-          51.7350075
-        ]
-      },
-      "properties": {
-        "name": "ROMAN ROAD - Great Road",
-        "type": "historic",
-        "wikidata": "Q3411196",
-        "wikipedia": "en:Pye Road",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": null
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          0.0256477,
-          51.1774834
-        ]
-      },
-      "properties": {
-        "name": "ROMAN ROAD - London to Lewes Way",
-        "type": "historic",
-        "wikidata": "Q6671157",
-        "wikipedia": "en:London to Lewes Way",
-        "address": "",
-        "opening_hours": null,
-        "wheelchair": null,
-        "website": null,
-        "image": null
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -0.0954694,
-          51.1964682
-        ]
-      },
-      "properties": {
-        "name": "Roman Road - London to Brighton Way",
-        "type": "historic",
-        "wikidata": "Q6671155",
-        "wikipedia": "en:London to Brighton Way",
         "address": "",
         "opening_hours": null,
         "wheelchair": null,
