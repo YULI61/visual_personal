@@ -117,11 +117,13 @@
     
     // 分类颜色配置
     const categoryColors = {
-      museum: '#E74C3C',
+      museum: '#FF6B6B',
       gallery: '#3498DB',
       theme_park: '#FF9F43',
       attraction: '#FFD700',
       zoo: '#8E44AD',
+      park: '#2ECC71',
+      historic: '#8B4513',
       aquarium: '#1ABC9C'
     };
 
@@ -186,7 +188,7 @@
       // 添加景点数据
       map.addSource('attractions', {
         type: 'geojson',
-        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_tourism.geojson'
+        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_tourism_2.geojson'
       });
 
       // 添加分类颜色图层
@@ -203,6 +205,8 @@
             'gallery', categoryColors.gallery,
             'theme_park', categoryColors.theme_park,
             'zoo', categoryColors.zoo,
+            'park', categoryColors.park,
+            'historic', categoryColors.historic,
             'aquarium', categoryColors.aquarium,
             'attraction', categoryColors.attraction,
             '#CCCCCC' // 默认颜色
