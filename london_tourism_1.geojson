@@ -12549,7 +12549,7 @@
       },
       "properties": {
         "name": "Tower of Church of St Augustine",
-        "type": "viewpoint",
+        "type": "other",
         "wikidata": "Q7592548",
         "wikipedia": "en:St Augustine's Tower, Hackney",
         "address": "",
@@ -17400,7 +17400,7 @@
       },
       "properties": {
         "name": "Thames Water Tower",
-        "type": "artwork",
+        "type": "other",
         "wikidata": "Q131740071",
         "wikipedia": null,
         "address": "",
@@ -21663,7 +21663,7 @@
       },
       "properties": {
         "name": "33",
-        "type": "artwork",
+        "type": "other",
         "wikidata": "Q120652412",
         "wikipedia": null,
         "address": "",

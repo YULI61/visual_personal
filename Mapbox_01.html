@@ -120,17 +120,17 @@
       museum: '#FF6B6B',
       gallery: '#3498DB',
       attraction: '#FFD700',
-      zoo: '#FF9F43',
       park: '#2ECC71',
       amenity: '#9B59B6',
-      historic: '#8B4513'
+      historic: '#8B4513',
+      other: '#CCCCCC'
     };
 
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-0.1278, 51.5074],
-      zoom: 10
+      zoom: 12
     });
       
     // 添加导航控件（包含指南针 + 缩放按钮）
@@ -196,13 +196,13 @@
         type: 'circle',
         source: 'attractions',
         paint: {
-          'circle-radius': 8,
+          'circle-radius': 6,
           'circle-color': [
             'match', 
             ['get', 'type'],
             'museum', categoryColors.museum,
             'gallery', categoryColors.gallery,
-            'zoo', categoryColors.zoo,
+            'other', categoryColors.other,
             'park', categoryColors.park,
             'historic', categoryColors.historic,
             'amenity', categoryColors.amenity,
