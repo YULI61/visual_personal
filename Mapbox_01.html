@@ -120,7 +120,7 @@
       museum: '#FF6B6B',
       gallery: '#3498DB',
       attraction: '#FFD700',
-      'zoo+aquarium': '#FF9F43',
+      zoo: '#FF9F43',
       park: '#2ECC71',
       historic: '#8B4513'
     };
@@ -129,7 +129,7 @@
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-0.1278, 51.5074],
-      zoom: 12
+      zoom: 9.5
     });
       
     // 添加导航控件（包含指南针 + 缩放按钮）
@@ -201,10 +201,10 @@
             ['get', 'type'],
             'museum', categoryColors.museum,
             'gallery', categoryColors.gallery,
-            'zoo+aquarium', categoryColors.'zoo+aquarium',
+            'zoo', categoryColors.zoo,
             'park', categoryColors.park,
             'historic', categoryColors.historic,
-            'aquarium', categoryColors.aquarium,
+            'attraction', categoryColors.attraction,
             '#CCCCCC' // 默认颜色
           ],
           'circle-opacity': 0.8,
