@@ -243,7 +243,7 @@
       },
       "properties": {
         "name": "London Aquarium",
-        "type": "aquarium",
+        "type": "zoo",
         "wikidata": "Q3312744",
         "wikipedia": "en:Sea Life London Aquarium",
         "address": "Westminster Bridge Road, London SE1 7PB",
