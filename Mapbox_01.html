@@ -7,13 +7,88 @@
   
     
 <style>
+    
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important; /* 禁止横向滚动 */
+        background-color: black !important; /* 强制背景黑色，避免假白边 */
+    }
+ 
+    /* 页面容器（可滑动） */
+    .page-container {
+        display: flex;
+        width: 200vw; /* 两个页面宽度 */
+        height: 100vh;
+        transition: transform 0.6s ease-in-out;
+    }
+
+    /* 单个页面 */
+    .page {
+        width: 100vw;
+        height: 100vh;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 24px;
+    }
+
+    /* 各页面的背景 */
+    #page1 { background: black; position: relative; }
+    #page2 { background: darkslateblue; }
+    
+    
+    /* 右侧翻页按钮（下一页） */
+    .next-button {
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        background: rgba(255, 215, 0, 0.8);
+        color: black;
+        border: none;
+        padding: 15px 20px;
+        cursor: pointer;
+        font-size: 24px;
+        border-radius: 50%;
+        z-index: 1000;
+        display: block;
+    }
+
+
+    /* 左侧翻页按钮（返回第一页） */
+    .prev-button {
+        position: fixed;
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        background: rgba(255, 215, 0, 0.8);
+        color: black;
+        border: none;
+        padding: 15px 20px;
+        cursor: pointer;
+        font-size: 24px;
+        border-radius: 50%;
+        z-index: 3000;
+        display: none;
+    }
+
+    /* 地图容器 */
+    #map, #cluster-map {
+        width: 100%;
+        height: 100vh;
+        position: absolute;
+    }
+    
     #title {
-      position: absolute;
+      position: fixed;
       top: 20px;
-      left: 50%;
+      left: 12%;
       transform: translateX(-50%);
       color: #FFD700;
-      font-size: 2em;
+      font-size: 1.5em;
       font-family: 'Arial Black', sans-serif;
       text-shadow: 0 0 5px rgba(255,215,0,0.2);
       z-index: 1000;
@@ -23,12 +98,13 @@
     }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
+    
     /* 侧边筛选面板 */
     .filter-panel {
       position: fixed;
-      left: -200px;
+      left: -180px;
       top: 220px;
-      width: 180px;
+      width: 160px;
       background: rgba(0,0,0,0.8);
       border-radius: 0 8px 8px 0;
       transition: all 0.3s ease;
@@ -40,13 +116,19 @@
     .filter-panel.expanded {
       left: 0;
     }
+    
+        /* 当进入第二页时，隐藏筛选面板 */
+    .hide-filter-panel .filter-panel {
+      display: none !important;
+    }
+
 
     /* 切换按钮 */
     .toggle-button {
       position: absolute;
-      right: -30px;
+      right: -25px;
       top: 0;
-      width: 30px;
+      width: 25px;
       height: 100%;
       background: rgba(0,0,0,0.7);
       border-radius: 0 8px 8px 0;
@@ -69,6 +151,7 @@
       align-items: center;
       transition: all 0.2s;
       margin: 5px 0;
+      font-size: 15px;
     }
 
     .filter-option:hover {
@@ -89,35 +172,98 @@
     
     /* 调整指南针按钮样式 */
      .mapboxgl-ctrl-compass {
-         background-color: rgba(0,0,0,0.7) !important;
-         border-radius: 8px !important;
+         border-radius: 8px ;
     }
 
+    /* 右上角模式切换按钮 */
+    .toggle-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+    }
+    
+    .toggle-button {
+        background: rgba(255, 215, 0, 0.9);
+        color: black;
+        padding: 8px 15px;
+        margin: 2px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+    }
+    
+    .toggle-button.active {
+        background: red;
+        color: white;
+    }
+    
+    /* 右下角饼图容器 */
+    .chart-container {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 300px;
+        height: 300px;
+        background: rgba(0, 0, 0, 0.8);
+        border-radius: 10px;
+        padding: 10px;
+        z-index: 1000;
+    }
+    
+    
+    
   </style>
 </head>
 
 <body>
   <div id="title">London Attractions Map</div>  
 
-  <!-- 折叠筛选面板 -->
-  <div class="filter-panel">
-    <button class="toggle-button">»</button>
-    <div class="filter-content">
-      <div class="filter-option active" data-type="all">
-        <div class="color-dot" style="background: #FFFFFF"></div>
-        All Types
-      </div>
-    </div>
-  </div>
+    
+  <!-- 页面容器 -->
+  <div class="page-container" id="pageContainer">
+      <!-- 第一页（地图） -->
+      <div class="page" id="page1">
+          <div id="map"></div>
+          <!-- 模式切换按钮 -->
+          <div class="toggle-container">
+              <button class="toggle-button active" id="pointMode">Point</button>
+              <button class="toggle-button" id="areaMode">Area</button>
+          </div>
+      
+      <!-- 饼图 -->
+          <div class="chart-container">
+              <canvas id="pieChart"></canvas>
+          </div>
+          <button class="next-button" id="nextBtn">→</button>
 
-  <div id="map"></div>
+          <!-- 侧边筛选面板（只在第一页） -->
+          <div class="filter-panel">
+            <button class="toggle-button">»</button>
+            <div class="filter-content">
+              <div class="filter-option active" data-type="all">
+                <div class="color-dot" style="background: #FFFFFF"></div>
+                All Types
+              </div>
+            </div>
+          </div>
+      </div>
+      
+      <!-- 第二页（信息页面） -->
+      <div class="page" id="page2">
+          <div id="cluster-map"></div>
+          <button class="prev-button" id="prevBtn">←</button>
+      </div>
+  </div>
+    
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoieWwzIiwiYSI6ImNtN2txZGc2czAzYjMybXNka3ZsbTl5cmQifQ.kV4cU6Id_aGZM7R1HiudwA';
     
     // 分类颜色配置
     const categoryColors = {
-      museum: '#FF6B6B',
+      museum: '#FF3030',
       gallery: '#3498DB',
       attraction: '#FFD700',
       park: '#2ECC71',
@@ -130,17 +276,207 @@
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-0.1278, 51.5074],
-      zoom: 12
+      zoom: 11.2, 
     });
       
     // 添加导航控件（包含指南针 + 缩放按钮）
-    map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+      
+    //area部分
+    
+    let currentMode = 'point';
+    let pieChart;
+    
+    function loadPointData() {
+        map.addSource('attractions', {
+            type: 'geojson',
+            data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_tourism_3.geojson'
+        });
+
+        map.addLayer({
+            id: 'attractions-layer',
+            type: 'circle',
+            source: 'attractions',
+            paint: {
+                'circle-radius': 5,
+                'circle-color': '#FFD700',
+                'circle-opacity': 0.8
+            }
+        });
+    }
+    
+    function loadBoroughData() {
+        map.addSource('boroughs', {
+            type: 'geojson',
+            data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_boroughs.geojson'
+        });
+
+        map.addLayer({
+            id: 'boroughs-layer',
+            type: 'fill',
+            source: 'boroughs',
+            paint: {
+                'fill-color': '#1E90FF',
+                'fill-opacity': 0.6
+            }
+        });
+    }
+    
+    function switchMode(mode) {
+        
+        if (mode === 'point') {
+            map.setLayoutProperty('attractions-layer', 'visibility', 'visible');
+            map.setLayoutProperty('boroughs-layer', 'visibility', 'none');
+        } else {
+            map.setLayoutProperty('attractions-layer', 'visibility', 'none');
+            map.setLayoutProperty('boroughs-layer', 'visibility', 'visible');
+        }
+    }
+    
+    function updatePieChart(data) {
+        if (pieChart) pieChart.destroy();
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        pieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    data: Object.values(data),
+                    backgroundColor: ['#FF5733', '#FFD700', '#3498DB', '#2ECC71', '#9B59B6', '#8B4513']
+                }]
+            }
+        });
+    }
+    
+    document.getElementById('pointMode').addEventListener('click', () => switchMode('point'));
+    document.getElementById('areaMode').addEventListener('click', () => switchMode('area'));
+    
+    map.on('load', () => {
+        loadPointData();
+        loadBoroughData();
+        switchMode('point');
+    });
+
+    // 处理页面滑动
+    let currentPage = 0;
+    const pageContainer = document.getElementById("pageContainer");
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+
+    let clusterMap = null;
+
+    function updatePage(direction) {
+        if (direction === "next" && currentPage < 1) {
+            currentPage++;
+        } else if (direction === "prev" && currentPage > 0) {
+            currentPage--;
+        }
+
+        pageContainer.style.transform = `translateX(-${currentPage * 100}vw)`;
+
+        nextBtn.style.display = currentPage === 0 ? "block" : "none";
+        prevBtn.style.display = currentPage === 1 ? "block" : "none";
+
+        if (currentPage === 1) {
+            document.body.classList.add("hide-filter-panel");
+
+            if (!clusterMap) {
+                initClusterMap();
+            }
+        } else {
+            document.body.classList.remove("hide-filter-panel");
+        }
+    }
+
+    nextBtn.addEventListener("click", () => updatePage("next"));
+    prevBtn.addEventListener("click", () => updatePage("prev"));
+
+    // 初始化聚类地图
+    function initClusterMap() {
+        clusterMap = new mapboxgl.Map({
+            container: 'cluster-map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [-0.1278, 51.5074],
+            zoom: 11.2
+        });
+
+        clusterMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+        clusterMap.on('load', () => {
+            clusterMap.addSource('clusters', {
+                type: 'geojson',
+                data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_tourism_3.geojson',
+                cluster: true,
+                clusterMaxZoom: 14,
+                clusterRadius: 50
+            });
+
+            clusterMap.addLayer({
+                id: 'clusters',
+                type: 'circle',
+                source: 'clusters',
+                filter: ['has', 'point_count'],
+                paint: {
+                    'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 10, '#f1f075', 30, '#f28cb1'],
+                    'circle-radius': ['step', ['get', 'point_count'], 20, 10, 30, 30, 40]
+                }
+            });
+
+            clusterMap.addLayer({
+                id: 'cluster-count',
+                type: 'symbol',
+                source: 'clusters',
+                filter: ['has', 'point_count'],
+                layout: {
+                    'text-field': '{point_count_abbreviated}',
+                    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                    'text-size': 12
+                }
+            });
+
+            clusterMap.addLayer({
+                id: 'unclustered-point',
+                type: 'circle',
+                source: 'clusters',
+                filter: ['!', ['has', 'point_count']],
+                paint: {
+                    'circle-color': '#ff5733',
+                    'circle-radius': 5,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#fff'
+                }
+            });
+
+            clusterMap.on('click', 'clusters', (e) => {
+                const features = clusterMap.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+                const clusterId = features[0].properties.cluster_id;
+
+                clusterMap.getSource('clusters').getClusterExpansionZoom(clusterId, (err, zoom) => {
+                    if (err) return;
+                    clusterMap.easeTo({ center: features[0].geometry.coordinates, zoom: zoom });
+                });
+            });
+
+            clusterMap.on('mouseenter', 'clusters', () => {
+                clusterMap.getCanvas().style.cursor = 'pointer';
+            });
+
+            clusterMap.on('mouseleave', 'clusters', () => {
+                clusterMap.getCanvas().style.cursor = '';
+            });
+        });
+    }
+
       
     // 初始化弹窗
     const popup = new mapboxgl.Popup({
       closeButton: true,
       offset: [0, -20],
       className: 'custom-popup'
+    }).on('open', () => {
+        document.querySelectorAll('.mapboxgl-popup').forEach(p => {
+            p.removeAttribute('aria-hidden'); // 直接移除 aria-hidden
+        });
     });
 
     let currentPopup = null;
@@ -163,9 +499,8 @@
         toggleButton.innerHTML = '»';
       }
     });
-
-    map.on('load', () => {
       
+    map.on('load', () => {         
       // 添加伦敦边界数据
       map.addSource('london-boundary', {
         type: 'geojson',
@@ -179,15 +514,46 @@
         source: 'london-boundary',
         paint: {
           'line-color': '#FFFFFF',
-          'line-width': 1.5,
+          'line-width': 1,
           'line-opacity': 0.4
         }
       });
+      
+        
+      // 道路样式修改
+     map.on('styledata', () => {
+         setTimeout(() => {
+          if (!map.getStyle()) return; // 确保样式加载完成
+
+          const roadLayers = map.getStyle().layers.filter(layer => 
+          layer.id && layer.id.includes('road') && layer.type === 'line' // 仅筛选 line 类型
+          );
+
+          roadLayers.forEach(layer => {
+          try {
+                map.setPaintProperty(layer.id, 'line-color', '#FFD700');
+                map.setPaintProperty(layer.id, 'line-width', 
+                    layer.id.includes('primary') || 
+                    layer.id.includes('secondary') || 
+                    layer.id.includes('tertiary') ? 2.5 : 1
+                );
+                map.setPaintProperty(layer.id, 'line-opacity', 
+                    layer.id.includes('primary') || 
+                    layer.id.includes('secondary') || 
+                    layer.id.includes('tertiary') ? 0.8 : 0.2
+                );
+        } catch (error) {
+                console.error(`Error setting paint properties for layer: ${layer.id}`, error);
+            }
+        });
+    }, 1000);
+    });        
+        
         
       // 添加景点数据
       map.addSource('attractions', {
         type: 'geojson',
-        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_tourism_1.geojson'
+        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_tourism_3.geojson'
       });
 
       // 添加分类颜色图层
@@ -196,7 +562,7 @@
         type: 'circle',
         source: 'attractions',
         paint: {
-          'circle-radius': 6,
+          'circle-radius': 5,
           'circle-color': [
             'match', 
             ['get', 'type'],
@@ -258,6 +624,14 @@
 
         currentPopup = popup.setLngLat(e.lngLat).setHTML(html);
         currentPopup.addTo(map);
+          
+        setTimeout(() => {
+            document.querySelectorAll('.mapboxgl-popup').forEach(popupElement => {
+                popupElement.removeAttribute('aria-hidden');
+            });
+        }, 0);
+
+          
       });
 
       // 弹窗控制逻辑
@@ -275,18 +649,8 @@
       });
 
           
-      // 道路样式修改
-      setTimeout(() => {
-          const roadLayers = map.getStyle().layers.filter(layer => layer.id && layer.id.includes('road'));
-
-          roadLayers.forEach(layer => {
-              map.setPaintProperty(layer.id, 'line-color', '#FFD700');
-              map.setPaintProperty(layer.id, 'line-width', layer.id.includes('primary') || layer.id.includes('secondary') || layer.id.includes('tertiary') ? 2.5 : 1);
-              map.setPaintProperty(layer.id, 'line-opacity', layer.id.includes('primary') || layer.id.includes('secondary') || layer.id.includes('tertiary') ? 0.8 : 0.2);
-          });
-      }, 1000);
-
-    });
+          
+  });
   </script>
 </body>
 </html>
