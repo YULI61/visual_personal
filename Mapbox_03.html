@@ -5,6 +5,7 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
   
     
@@ -91,7 +92,8 @@
       border-radius: 15px;
       background: rgba(0,0,0,0);
     }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    
+    #map { position: absolute; top: 0; bottom: 0; width: 100%;z-index: 1 }
 
     
     /* 侧边筛选面板 */
@@ -171,7 +173,6 @@
     }
 
     /* 右上角模式切换按钮 */
-     /* 修正按钮容器定位 */
     .toggle-container {
       position: absolute;
       top: 10px;
@@ -191,31 +192,6 @@
       color: white;
     }
 
-    /* 确保 ECharts 容器覆盖 Mapbox */
-    #echarts-map {
-      z-index: 500; 
-      pointer-events: auto; /* 允许交互 */
-    }
-
-    /* 当 ECharts 激活时隐藏 Mapbox 控件 */
-    .echarts-active .mapboxgl-control-container {
-      display: none;
-    }
-    
-    /* 右下角饼图容器 */
-    .chart-container {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        width: 300px;
-        height: 300px;
-        background: rgba(0, 0, 0, 0.8);
-        border-radius: 10px;
-        padding: 10px;
-        z-index: 1000;
-        display: none; /* 默认隐藏 */
-    }
-    
     
     
   </style>
@@ -234,12 +210,8 @@
             <!-- 更新按钮类名 -->
             <div class="toggle-container">
               <button class="mode-toggle-button active" id="pointMode">Point</button>
-              <button class="mode-toggle-button" id="areaMode">Area</button>
-            </div>
-        <div class="chart-container">
-          <canvas id="pieChart"></canvas>
-        </div>
-          
+                <button class="mode-toggle-button" id="areaMode">Area</button>
+            </div>       
         <button class="next-button" id="nextBtn">→</button>
         <div class="filter-panel">
           <button class="panel-toggle-button">»</button> 
@@ -283,172 +255,16 @@
       zoom: 11.2, 
     });
       
+
+    // 新增数据预加载
+    fetch('https://raw.githubusercontent.com/YULI61/visual_personal/main/borough_stats.json')
+        .then(r => r.json())
+        .then(data => boroughStatsData = data)
+        .catch(console.error);
+    
     // 添加导航控件（包含指南针 + 缩放按钮）
     map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
       
-    //area部分
-    // 新增 ECharts 初始化
-    const echartsMap = echarts.init(document.getElementById('echarts-map'));
-    let currentBorough = 'london'; // 当前选中区域
-    let mode = 'point';  // 设定初始模式为 Point
-
-
-    function switchMode(newMode) {
-        mode = newMode;  // 更新 mode 变量
-
-        document.getElementById('pointMode').classList.toggle('active', mode === 'point');
-        document.getElementById('areaMode').classList.toggle('active', mode === 'area');
-
-        map.setLayoutProperty('attractions-layer', 'visibility', mode === 'point' ? 'visible' : 'none');
-        document.getElementById('echarts-map').style.display = mode === 'area' ? 'block' : 'none';
-
-        if (mode === 'area' && !echartsMap._isMounted) {
-            initEchartsMap();
-        }
-    }   
-      
-    // 初始化 ECharts 地图
-    async function initEchartsMap() {
-      // 加载伦敦 GeoJSON
-      const res = await fetch('https://raw.githubusercontent.com/YULI61/visual_personal/main/london_borough.geojson');
-      const londonGeo = await res.json();
-
-      // 注册地图
-      echarts.registerMap('london', londonGeo);
-
-      // 配置项
-      const option = {
-        visualMap: {
-          left: 'right',
-          min: 0,
-          max: 100,
-          inRange: { color: ['#e0f3f8', '#4575b4'] },
-          calculable: true
-        },
-        series: [{
-          type: 'map',
-          map: 'london',
-          roam: true,
-          data: [
-            { name: "London Borough of Sutton", value: 10 },
-            { name: "City of Westminster", value: 258 },
-            { name: "Royal Borough of Kensington and Chelsea", value: 33 },
-            { name: "City of London", value: 44 },
-            { name: "London Borough of Tower Hamlets", value: 59 },
-            { name: "London Borough of Hackney", value: 27 },
-            { name: "London Borough of Haringey", value: 16 },
-            { name: "London Borough of Islington", value: 31 },
-            { name: "London Borough of Camden", value: 86 },
-            { name: "London Borough of Barnet", value: 34 },
-            { name: "London Borough of Enfield", value: 11 },
-            { name: "London Borough of Hounslow", value: 26 },
-            { name: "Royal Borough of Greenwich", value: 43 },
-            { name: "London Borough of Bexley", value: 10 },
-            { name: "London Borough of Merton", value: 14 },
-            { name: "London Borough of Wandsworth", value: 15 },
-            { name: "London Borough of Croydon", value: 35 },
-            { name: "Royal Borough of Kingston upon Thames", value: 9 },
-            { name: "London Borough of Waltham Forest", value: 14 },
-            { name: "London Borough of Redbridge", value: 9 },
-            { name: "London Borough of Brent", value: 9 },
-            { name: "London Borough of Richmond upon Thames", value: 39 },
-            { name: "London Borough of Bromley", value: 21 },
-            { name: "London Borough of Harrow", value: 2 },
-            { name: "London Borough of Ealing", value: 11 },
-            { name: "London Borough of Hillingdon", value: 13 },
-            { name: "London Borough of Hammersmith and Fulham", value: 30 },
-            { name: "London Borough of Lambeth", value: 56 },
-            { name: "London Borough of Lewisham", value: 26 },
-            { name: "London Borough of Havering", value: 15 },
-            { name: "London Borough of Barking and Dagenham", value: 10 },
-            { name: "London Borough of Newham", value: 41 },
-            { name: "London Borough of Southwark", value: 64 }
-        ],
-
-          emphasis: { label: { show: true } },
-          selectedMode: 'single',
-          // 点击事件
-          select: {
-            itemStyle: { color: '#FFD700' },
-            label: { color: '#000' }
-          }
-        }]
-      };
-      echartsMap.setOption(option);
-
-      // 点击事件
-      echartsMap.on('click', (params) => {
-        currentBorough = params.name;
-        updatePieChart(currentBorough);
-      });
-    }
-
-    // 更新饼图
-    async function updatePieChart(boroughName = 'london') {
-      const res = await fetch('borough_stats.json');
-      const data = await res.json();
-
-      const chartData = boroughName === 'london' ? 
-        data.london : 
-        data.boroughs[boroughName].types;
-
-      pieChart.setOption({
-        series: [{
-          data: Object.entries(chartData).map(([name, value]) => ({
-            name,
-            value
-          }))
-        }]
-      });
-    }
-      
-      // 控制侧边栏显示状态
-
-    // ==== 修复后的 switchMode 函数 ====
-    function switchMode(mode) {
-      currentMode = mode;
-
-      // 使用顶部已声明的 filterPanel（移除 const 声明）
-      filterPanel.style.display = mode === 'point' ? 'block' : 'none';  // ✅
-      document.getElementById('echarts-map').style.display = mode === 'area' ? 'block' : 'none';
-
-      // 其他原有逻辑保持不变...
-      document.getElementById('pointMode').classList.toggle('active', mode === 'point');
-      document.getElementById('areaMode').classList.toggle('active', mode === 'area');
-      map.setLayoutProperty('attractions-layer', 'visibility', mode === 'point' ? 'visible' : 'none');
-      document.querySelector('.chart-container').style.display = mode === 'area' ? 'block' : 'none';
-    }
-
-    // 添加行政区统计数据获取函数
-    async function fetchBoroughStats() {
-      const response = await fetch('https://raw.githubusercontent.com/YULI61/visual_personal/main/borough_stats.json');
-      return response.json();
-    }
-
-
-    function updatePieChart(data) {
-        if (pieChart) pieChart.destroy();
-        const ctx = document.getElementById('pieChart').getContext('2d');
-        pieChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: Object.keys(data),
-                datasets: [{
-                    data: Object.values(data),
-                    backgroundColor: ['#FF5733', '#FFD700', '#3498DB', '#2ECC71', '#9B59B6', '#8B4513']
-                }]
-            }
-        });
-    }
-    
-    document.getElementById('pointMode').addEventListener('click', () => switchMode('point'));
-    document.getElementById('areaMode').addEventListener('click', () => switchMode('area'));
-    
-    map.once('load', () => { // ✅ 只运行一次，避免重复添加 Source
-        loadPointData();
-        loadBoroughData();
-        switchMode('point');
-    });
 
     // 处理页面滑动
     let currentPage = 0;
@@ -456,7 +272,8 @@
     const nextBtn = document.getElementById("nextBtn");
     const prevBtn = document.getElementById("prevBtn");
 
-    let clusterMap = null;
+    let echartsMap  = null;
+    let boroughStatsData = null;
 
     function updatePage(direction) {
         if (direction === "next" && currentPage < 1) {
@@ -473,9 +290,6 @@
         if (currentPage === 1) {
             document.body.classList.add("hide-filter-panel");
 
-            if (!clusterMap) {
-                initClusterMap();
-            }
         } else {
             document.body.classList.remove("hide-filter-panel");
         }
@@ -484,7 +298,17 @@
     nextBtn.addEventListener("click", () => updatePage("next"));
     prevBtn.addEventListener("click", () => updatePage("prev"));
 
+    // 修改getBoroughStats函数
+    function getBoroughStats(type) {
+        if (!boroughStatsData) return [];
 
+        return Object.entries(boroughStatsData.boroughs).map(([name, data]) => ({
+            name: name.replace("London Borough of ", "") // 简化名称匹配
+                      .replace("Royal Borough of ", "")
+                      .replace("City of ", ""),
+            value: type === 'all' ? data.total : (data.types[type] || 0)
+        }));
+    }
     
     // 初始化弹窗
     const popup = new mapboxgl.Popup({
@@ -512,30 +336,41 @@
 
     // 点击外部关闭侧边栏
     document.addEventListener('click', (e) => {
-      if (!filterPanel.contains(e.target) && !panelToggleBtn.contains(e.target)) { // ✅ 使用 panelToggleBtn
+      if (!filterPanel.contains(e.target) && !panelToggleBtn.contains(e.target)) { 
         filterPanel.classList.remove('expanded');
         panelToggleBtn.innerHTML = '»';
       }
     });
       
-    map.on('load', () => {         
-      // 添加伦敦边界数据
-      map.addSource('london-boundary', {
-        type: 'geojson',
-        data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/London_boundary.geojson'
-      });
+    // 添加伦敦边界数据
+    map.on('load', async () => {
+        // 1️⃣ 添加伦敦边界
+        map.addSource('london-boundary', {
+            type: 'geojson',
+            data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/London_boundary.geojson'
+        });
 
-      // 添加边界图层（线图层）
-      map.addLayer({
-        id: 'london-boundary-layer',
-        type: 'line',
-        source: 'london-boundary',
-        paint: {
-          'line-color': '#FFFFFF',
-          'line-width': 1,
-          'line-opacity': 0.4
-        }
-      });
+        map.addLayer({
+            id: 'london-boundary-layer',
+            type: 'line',
+            source: 'london-boundary',
+            paint: {
+                'line-color': '#FFFFFF',
+                'line-width': 1,
+                'line-opacity': 0.4
+            }
+        });
+
+            console.log("📌 地图加载完成，开始加载 Boroughs 数据...");
+
+            await loadBoroughs(); // 先加载 Boroughs
+
+            console.log("✅ Boroughs 加载完成，切换到 Point 模式");
+        
+        
+            switchMode('point'); // **确保 Borough 加载完成后才切换模式**
+
+
       
     // 添加缺失的数据加载函数
     function loadPointData() {
@@ -556,35 +391,14 @@
             'circle-color': '#FFD700',
             'circle-opacity': 0.8
           }
-        });
+        }, 'london-boundary-layer'); 
       }
     }
 
-    function loadBoroughData() {
-      if (!map.getSource('boroughs')) {
-        map.addSource('boroughs', {
-          type: 'geojson',
-          data: 'https://raw.githubusercontent.com/YULI61/visual_personal/main/london_borough.geojson'
-        });
-      }
-
-      if (!map.getLayer('boroughs-layer')) {
-        map.addLayer({
-          id: 'boroughs-layer',
-          type: 'fill',
-          source: 'boroughs',
-          paint: {
-            'fill-color': '#1E90FF',
-            'fill-opacity': 0.6
-          }
-        });
-      }
-    }
 
     // 初始化时加载数据
     map.once('load', () => {
       loadPointData();
-      loadBoroughData();
       switchMode('point'); // 默认显示散点模式
     });
         
@@ -678,9 +492,12 @@
           );
         });
 
-      // 悬停显示弹窗
+        
+      // 悬停显示弹窗       
+      let attractionPopup  = null; // 用于 Borough 的弹窗
+        
       map.on('mouseenter', 'attractions-layer', (e) => {
-        if (currentPopup) return;
+        if (mode !== 'point') return; 
 
         const props = e.features[0].properties;
         let html = `<h3 style="margin:0; color:${categoryColors[props.type] || '#FFF'}">${props.name}</h3>`;
@@ -700,11 +517,10 @@
             document.querySelectorAll('.mapboxgl-popup').forEach(popupElement => {
                 popupElement.removeAttribute('aria-hidden');
             });
-        }, 0);
-
-          
+        }, 0); 
       });
 
+        
       // 弹窗控制逻辑
       map.on('mouseleave', 'attractions-layer', () => {
         closeTimer = setTimeout(() => {
@@ -719,6 +535,227 @@
         }
       });
        
+     
+    //area部分
+    // 1️⃣ 添加 Borough 数据
+    async function loadBoroughs() {
+        try {
+            const response = await fetch('https://raw.githubusercontent.com/YULI61/visual_personal/main/London_borough_compressed.geojson');
+            const geojson = await response.json();
+
+            console.log("📌 载入 Borough GeoJSON 数据:", geojson);
+
+            if (!map.getSource('boroughs')) {
+                map.addSource('boroughs', {
+                    type: 'geojson',
+                    data: geojson
+                });
+            }
+
+            if (!map.getLayer('borough-fill')) {
+                map.addLayer({
+                    id: 'borough-fill',
+                    type: 'fill',
+                    source: 'boroughs',
+                    paint: {
+                        'fill-color': '#2A2A2A', 
+                        'fill-opacity': 0.8
+                    }
+                }, 'london-boundary-layer'); 
+            }
+
+            if (!map.getLayer('borough-border')) {
+                map.addLayer({
+                    id: 'borough-border',
+                    type: 'line',
+                    source: 'boroughs',
+                    paint: {
+                        'line-color': '#FFD700',
+                        'line-width': 1
+                    }
+                });
+            }
+
+            console.log("✅ Borough 图层加载完成");
+
+            // **确保 Borough 相关图层初始隐藏**
+            map.setLayoutProperty('borough-fill', 'visibility', 'none');
+            map.setLayoutProperty('borough-border', 'visibility', 'none');
+
+        } catch (error) {
+            console.error("❌ 加载 Boroughs 失败:", error);
+        }
+    }
+
+
+
+
+    // 5️⃣ 添加鼠标交互：悬停高亮
+    let boroughPopup = null; // 记录当前的 Borough 弹窗
+
+    map.on('mousemove', 'borough-fill', (e) => {
+        if (mode !== 'area') return; // 仅在 Area 模式下显示 Borough 信息
+
+        const boroughFeature = e.features[0];
+        if (!boroughFeature) return;
+
+        // **确保 Borough 名称匹配 boroughStatsData 的 key**
+        let boroughName = boroughFeature.properties.name;
+        boroughName = boroughName.replace("London Borough of ", "")
+                                 .replace("Royal Borough of ", "")
+                                 .replace("City of ", "");
+
+        const stats = boroughStatsData.boroughs[boroughName] || { total: 0, types: {} };
+        const selectedType = document.querySelector('.filter-option.active').dataset.type;
+
+        let value = stats.total; // 默认使用所有类型的景点总数
+        if (selectedType !== 'all') {
+            value = stats.types[selectedType] || 0;
+        }
+
+        // 如果鼠标仍在同一个 Borough 内，则不重复创建弹窗
+        if (boroughPopup && boroughPopup._lngLat.lng === e.lngLat.lng && boroughPopup._lngLat.lat === e.lngLat.lat) {
+            return;
+        }
+
+        // 移除旧弹窗，避免多个 Borough 弹窗重叠
+        if (boroughPopup) {
+            boroughPopup.remove();
+        }
+
+        // 创建新的 Borough 弹窗
+        boroughPopup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+                <h4>${boroughName}</h4>
+                <p>${selectedType === 'all' ? 'Total' : selectedType}: ${value}</p>
+            `)
+            .addTo(map);
+    });
+
+    // **鼠标移出 Borough 时隐藏弹窗**
+    map.on('mouseleave', 'borough-fill', () => {
+        if (boroughPopup) {
+            boroughPopup.remove();
+            boroughPopup = null;
+        }
+    });
+
+
+
+    // 7️⃣ 先加载 Boroughs
+    loadBoroughs();
+
+
+
+    function switchMode(newMode) {
+        mode = newMode;
+        const selectedType = document.querySelector('.filter-option.active').dataset.type;
+
+        if (mode === 'point') {
+            document.getElementById('map').style.display = 'block';
+            map.setLayoutProperty('attractions-layer', 'visibility', 'visible');
+            map.setLayoutProperty('borough-fill', 'visibility', 'none'); // 隐藏 Borough 填充色
+            map.setLayoutProperty('borough-border', 'visibility', 'none'); // **隐藏 Borough 边界**
+            map.dragPan.enable();
+            map.scrollZoom.enable();
+        } else {
+            document.getElementById('map').style.display = 'block';
+            map.setLayoutProperty('attractions-layer', 'visibility', 'none');
+            map.setLayoutProperty('borough-fill', 'visibility', 'visible'); // 显示 Borough 颜色填充
+            map.setLayoutProperty('borough-border', 'visibility', 'visible'); // **显示 Borough 边界**
+            map.dragPan.enable();
+            map.scrollZoom.enable();
+            updateBoroughColors(selectedType);
+        }
+    }
+
+
+
+    function updateBoroughColors(selectedType = 'all') {
+        fetch('https://raw.githubusercontent.com/YULI61/visual_personal/main/borough_stats.json')
+            .then(response => response.json())
+            .then(boroughStatsData => {
+                const boroughFeatures = map.getSource('boroughs')._data.features;
+
+                const updatedFeatures = boroughFeatures.map(feature => {
+                    const boroughName = feature.properties.name;
+                    const stats = boroughStatsData.boroughs[boroughName] || { total: 0, types: {} };
+
+                    let value = stats.total; // 默认使用所有类型
+                    if (selectedType !== 'all') {
+                        value = stats.types[selectedType] || 0;
+                    }
+
+                    feature.properties.value = value;
+                    return feature;
+                });
+
+                // 更新数据源
+                map.getSource('boroughs').setData({
+                    type: 'FeatureCollection',
+                    features: updatedFeatures
+                });
+
+                // 计算最大值
+                const maxVal = Math.max(...updatedFeatures.map(f => f.properties.value), 1);
+
+                // 🌟 优化颜色梯度
+                map.setPaintProperty('borough-fill', 'fill-color', [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'value'],
+                    0, '#1a1a1a',  // 最小值（黑灰色）
+                    maxVal * 0.2, '#00429d', // 深蓝
+                    maxVal * 0.4, '#4771b3', // 蓝色
+                    maxVal * 0.6, '#73a2c6', // 浅蓝
+                    maxVal * 0.8, '#a5d5e7', // 浅青
+                    maxVal, '#ffff99'  // 最大值（金色）
+                ]);
+
+                // 🌟 让填充颜色稍微透明一点
+                map.setPaintProperty('borough-fill', 'fill-opacity', 0.7);
+            })
+            .catch(console.error);
+    }
+
+      
+
+    document.querySelector('.filter-content').addEventListener('click', function(e) {
+        const option = e.target.closest('.filter-option');
+        if (!option) return;
+
+        document.querySelectorAll('.filter-option').forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+
+        const selectedType = option.dataset.type;
+
+        // 更新景点点位（Point模式）
+        map.setFilter('attractions-layer', 
+            selectedType === 'all' ? null : ['==', ['get', 'type'], selectedType]
+        );
+
+        // 更新 Borough 颜色（Area模式）
+        if (mode === 'area') {
+            updateBoroughColors(selectedType);
+        }
+    });
+
+
+
+    // 窗口缩放处理
+    window.addEventListener('resize', () => {
+        if (echartsMap) echartsMap.resize();
+    });
+
+    
+    document.getElementById('pointMode').addEventListener('click', () => switchMode('point'));
+    document.getElementById('areaMode').addEventListener('click', () => switchMode('area'));
+    
+      
           
   });
   </script>

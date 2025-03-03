@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>London Cluster Map</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoieWwzIiwiYSI6ImNtN2txZGc2czAzYjMybXNka3ZsbTl5cmQifQ.kV4cU6Id_aGZM7R1HiudwA';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [-0.1278, 51.5074],
+            zoom: 10,
+        });
+
+        // 加载 GeoJSON 数据
+        fetch('cluster_data.json')
+            .then(response => response.json())
+            .then(data => {
+                ['eps_300', 'eps_600', 'eps_1200', 'eps_1500'].forEach((eps, i) => {
+                    map.addSource(eps, {
+                        type: 'geojson',
+                        data: { type: 'FeatureCollection', features: data[eps] }
+                    });
+
+                    map.addLayer({
+                        id: eps,
+                        type: 'circle',
+                        source: eps,
+                        paint: {
+                            'circle-radius': 6,
+                            'circle-color': [
+                                'match',
+                                ['get', 'cluster_id'],
+                                ...generateClusterColors(data[eps]),
+                                '#ffffff' // 默认颜色
+                            ]
+                        }
+                    });
+                });
+                updateClusterVisibility();
+                map.on('zoom', updateClusterVisibility);
+            });
+
+        // 生成 cluster 颜色
+        function generateClusterColors(features) {
+            const colors = ['#FF3030', '#3498DB', '#FFD700', '#2ECC71', '#9B59B6', '#E67E22', '#1ABC9C'];
+            let colorMap = {};
+            return features.flatMap(f => {
+                let id = f.properties.cluster_id;
+                if (!colorMap[id]) {
+                    colorMap[id] = colors[Object.keys(colorMap).length % colors.length];
+                }
+                return [id, colorMap[id]];
+            });
+        }
+
+        // 根据 zoom 级别动态切换可见 cluster
+        function updateClusterVisibility() {
+            const zoom = map.getZoom();
+            map.setLayoutProperty('eps_300', 'visibility', zoom > 13 ? 'visible' : 'none');
+            map.setLayoutProperty('eps_600', 'visibility', zoom > 10 && zoom <= 13 ? 'visible' : 'none');
+            map.setLayoutProperty('eps_1200', 'visibility', zoom > 7 && zoom <= 10 ? 'visible' : 'none');
+            map.setLayoutProperty('eps_1500', 'visibility', zoom <= 7 ? 'visible' : 'none');
+        }
+    </script>
+</body>
+</html>
