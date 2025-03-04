@@ -346,7 +346,6 @@
         
     map.on('sourcedata', (e) => {
         if (e.sourceId === 'attractions' && map.getSource('attractions').loaded()) {
-            console.log("✅ 数据源加载完成，检查 features:");
             console.log(map.getSource('attractions')._data);
         }
     });
